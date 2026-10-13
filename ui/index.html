@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consultant Work-Log Bot</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #1e293b; --panel2: #273449; --line: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent2: #22c55e;
+    --user: #1d4ed8; --bot: #243247; --danger: #ef4444; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); }
+
+  .topnav { display: flex; align-items: center; gap: 20px; padding: 0 22px; height: 56px;
+    background: var(--panel); border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .brand span { color: var(--accent); }
+  .tabs { display: flex; gap: 6px; }
+  .tabs button { background: transparent; border: 1px solid transparent; color: var(--muted);
+    padding: 8px 16px; font-size: 14px; border-radius: 8px; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { background: var(--panel2); color: var(--accent); border-color: var(--line); }
+  .status { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #64748b; margin-right: 6px; }
+  .dot.on { background: var(--accent2); } .dot.off { background: var(--danger); }
+
+  .layout { flex: 1; min-height: 0; position: relative; }
+  .view { display: none; height: 100%; }
+  .view.active { display: flex; }
+
+  aside { width: 300px; min-width: 300px; background: var(--panel); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow-y: auto; }
+  .stats { display: flex; gap: 8px; }
+  .stat { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
+  .stat b { display: block; font-size: 18px; color: var(--accent); }
+  .stat small { color: var(--muted); font-size: 10.5px; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 0; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button { cursor: pointer; border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    border-radius: 8px; padding: 8px 10px; font-size: 12.5px; transition: .15s; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #06263a; font-weight: 700; border: none; }
+  button.primary:hover { background: #7dd3fc; color: #06263a; }
+  button.danger { color: #fca5a5; }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  button.mini { padding: 3px 8px; font-size: 11px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .logentries { display: flex; flex-direction: column; gap: 8px; }
+  .entry { background: var(--panel2); border: 1px solid var(--line); border-left: 3px solid var(--accent2);
+    border-radius: 8px; padding: 8px 10px; font-size: 12.5px; }
+  .entry .d { color: var(--muted); font-size: 11px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; }
+  .sub { color: var(--muted); font-size: 12px; }
+
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .chat-head { padding: 14px 22px; border-bottom: 1px solid var(--line); }
+  .chat-head h1 { font-size: 15px; margin: 0; }
+  #chat { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 78%; padding: 12px 15px; border-radius: 14px; line-height: 1.5; font-size: 14px; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: var(--user); border-bottom-right-radius: 4px; }
+  .msg.bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg.bot h2 { font-size: 14px; margin: 12px 0 6px; color: var(--accent); }
+  .msg.bot h2:first-child { margin-top: 0; }
+  .msg.bot ul { margin: 6px 0; padding-left: 20px; }
+  .msg.bot li { margin: 3px 0; }
+  .msg.bot blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--accent);
+    background: rgba(56,189,248,.08); border-radius: 4px; color: var(--muted); }
+  .msg.bot code { background: #0b1220; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  .skill-note { align-self: flex-start; font-size: 11.5px; color: var(--accent2); padding: 2px 4px; }
+  .typing { color: var(--muted); font-style: italic; }
+  form.chat-form { display: flex; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--line); }
+  input[type=text], textarea, select { background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 10px 12px; font-size: 13.5px; outline: none; font-family: inherit; }
+  input[type=text]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  .chat-form input { flex: 1; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .chat-form button { background: var(--accent); color: #06263a; font-weight: 700; border: none; padding: 0 22px; font-size: 14px; }
+  .chat-form button:hover { background: #7dd3fc; color: #06263a; }
+
+  .page { flex: 1; overflow-y: auto; padding: 22px; max-width: 940px; margin: 0 auto; width: 100%; }
+  .page h2 { font-size: 16px; margin: 0 0 4px; }
+  .page .lead { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .toolbar input { flex: 1; min-width: 200px; }
+  .toolbar select { min-width: 150px; }
+
+  .h-group { margin-bottom: 20px; }
+  .h-date { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent);
+    border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 10px; }
+  .h-entry { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .h-text { font-size: 14px; line-height: 1.5; }
+  .h-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+  .h-meta .tags { color: var(--muted); font-size: 12px; }
+  .h-meta .acts { display: flex; gap: 6px; }
+  .edit-area { display: flex; flex-direction: column; gap: 8px; }
+  .edit-area textarea { width: 100%; min-height: 70px; resize: vertical; }
+  .edit-area .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .skill-form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+    margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .skill-form .full { grid-column: 1 / -1; }
+  .skill-form label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 4px; }
+  .skill-form input, .skill-form select, .skill-form textarea { width: 100%; }
+  .skill-form textarea { min-height: 110px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .skill-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .skill-card.builtin { border-left: 3px solid var(--accent2); }
+  .skill-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .skill-card .name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 10.5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .badge.lvl { background: rgba(56,189,248,.12); color: var(--accent); border-color: rgba(56,189,248,.3); }
+  .badge.bi { background: rgba(34,197,94,.12); color: var(--accent2); border-color: rgba(34,197,94,.3); }
+  .badge.slug { font-family: ui-monospace, Menlo, monospace; color: var(--muted); }
+  .skill-card .desc { color: var(--text); font-size: 12.8px; margin-top: 8px; line-height: 1.45; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .chip { font-size: 10.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+  .skill-card details { margin-top: 10px; }
+  .skill-card summary { cursor: pointer; font-size: 12px; color: var(--accent); }
+  .skill-card pre { background: #0b1220; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    font-size: 12px; white-space: pre-wrap; margin: 8px 0 0; }
+  .skill-card .acts { display: flex; gap: 6px; margin-top: 12px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
+</style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand">Consultant <span>Work-Log</span> Bot</div>
+    <div class="tabs">
+      <button data-tab="chat" class="active">Chat</button>
+      <button data-tab="history">History</button>
+      <button data-tab="skills">Skills</button>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="status-text">checking LLM…</span></div>
+  </nav>
+
+  <div class="layout">
+    <!-- CHAT -->
+    <section id="view-chat" class="view active">
+      <aside>
+        <div class="stats">
+          <div class="stat"><b id="s-total">0</b><small>Entries</small></div>
+          <div class="stat"><b id="s-days">0</b><small>Days</small></div>
+          <div class="stat"><b id="s-skills">0</b><small>Skills</small></div>
+        </div>
+        <h3>Log work</h3>
+        <div class="actions">
+          <button onclick="fill('Today I ')">+ Add work</button>
+          <button onclick="runSkill('log-today','I want to log my work.')">Log my day</button>
+        </div>
+        <h3>Summaries</h3>
+        <div class="actions">
+          <button onclick="send('Give me a summary of my daily work today.')">Daily</button>
+          <button onclick="send('Give me a weekly summary of my work this week.')">Weekly</button>
+          <button onclick="send('Give me a monthly summary of my work this month.')">Monthly</button>
+          <button onclick="send('Summarise the impact of my entire placement.')">Full placement</button>
+        </div>
+        <h3>Recent entries</h3>
+        <div class="logentries" id="entries"><div class="sub">Loading…</div></div>
+      </aside>
+      <main>
+        <div class="chat-head"><h1>Placement log assistant</h1></div>
+        <div id="chat"></div>
+        <form class="chat-form" onsubmit="onSubmit(event)">
+          <input type="text" id="input" placeholder="Describe your work, or ask for a summary…" autocomplete="off" />
+          <button type="submit" id="sendBtn">Send</button>
+        </form>
+      </main>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="view-history" class="view">
+      <div class="page">
+        <h2>Log history</h2>
+        <div class="lead">All past entries. Search, filter, edit or delete any entry.</div>
+        <div class="toolbar">
+          <input type="text" id="h-search" placeholder="Search logs…" oninput="loadHistory()" />
+          <select id="h-range" onchange="loadHistory()">
+            <option value="all">All time</option>
+            <option value="daily">Today</option>
+            <option value="weekly">This week</option>
+            <option value="monthly">This month</option>
+          </select>
+        </div>
+        <div id="h-list"></div>
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="view-skills" class="view">
+      <div class="page">
+        <h2>Skills</h2>
+        <div class="lead">
+          Skills are portable, open-format capability packages. Each one is a <code>SKILL.md</code>
+          file (frontmatter + instructions) with an optional <code>scripts/</code> folder, stored under
+          <code>data/skills/&lt;slug&gt;/</code>. Built-in skills drive the core workflows; add your own
+          domain expertise below and run it from chat.
+        </div>
+
+        <form class="skill-form" onsubmit="addSkill(event)">
+          <div><label>Skill name</label><input type="text" id="sk-name" required placeholder="e.g. Weekly Client Report" /></div>
+          <div><label>Triggers (comma separated)</label><input type="text" id="sk-triggers" placeholder="weekly report, client update" /></div>
+          <div class="full"><label>Description</label><input type="text" id="sk-desc" placeholder="One line: what this skill does and when to use it." /></div>
+          <div class="full"><label>Instructions (markdown)</label>
+            <textarea id="sk-instructions" placeholder="# Goal&#10;&#10;## Steps&#10;1. ...&#10;2. ..."></textarea>
+          </div>
+          <div><label>Script filename (optional)</label><input type="text" id="sk-script-name" placeholder="report.py" /></div>
+          <div><label>Script content (optional)</label><input type="text" id="sk-script-body" placeholder="#!/usr/bin/env python3 ..." /></div>
+          <div class="full"><button class="primary" type="submit">Add skill</button></div>
+        </form>
+
+        <div id="skill-list"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+let histEntries = {};
+let skillCache = {};
+
+/* ------------------------------------------------------------ utilities */
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function mdToHtml(md) {
+  const lines = escapeHtml(md).split('\n');
+  let html = '', inList = false;
+  const inline = t => t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`(.+?)`/g, '<code>$1</code>');
+  for (let line of lines) {
+    const t = line.trim();
+    if (/^##\s+/.test(t)) { if (inList) { html += '</ul>'; inList = false; } html += '<h2>' + inline(t.replace(/^##\s+/, '')) + '</h2>'; }
+    else if (/^[-*]\s+/.test(t)) { if (!inList) { html += '<ul>'; inList = true; } html += '<li>' + inline(t.replace(/^[-*]\s+/, '')) + '</li>'; }
+    else if (/^>\s?/.test(t)) { if (inList) { html += '</ul>'; inList = false; } html += '<blockquote>' + inline(t.replace(/^>\s?/, '')) + '</blockquote>'; }
+    else if (t === '') { if (inList) { html += '</ul>'; inList = false; } }
+    else { if (inList) { html += '</ul>'; inList = false; } html += '<div>' + inline(t) + '</div>'; }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+async function api(url, opts) {
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    let detail = 'HTTP ' + res.status;
+    try { detail = (await res.json()).detail || detail; } catch (_) {}
+    throw new Error(detail);
+  }
+  return res.status === 204 ? null : res.json();
+}
+function jsonBody(method, data) {
+  return { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+}
+
+/* ----------------------------------------------------------- chat view */
+function addMessage(text, who) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerHTML = who === 'bot' ? mdToHtml(text) : escapeHtml(text);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+function addSkillNote(name) {
+  const div = document.createElement('div');
+  div.className = 'skill-note';
+  div.textContent = '▶ ran skill: ' + name;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+async function send(text) { await postChat(text, null); }
+async function runSkill(slug, message) {
+  showTab('chat');
+  await postChat(message, slug);
+}
+async function postChat(text, skill) {
+  text = (text || '').trim();
+  if (!text) return;
+  if (skill) addSkillNote(skill);
+  addMessage(text, 'user');
+  input.value = '';
+  sendBtn.disabled = true;
+  const typing = addMessage('Thinking…', 'bot');
+  typing.classList.add('typing');
+  try {
+    const data = await api('/api/chat', jsonBody('POST', { message: text, skill }));
+    typing.classList.remove('typing');
+    typing.innerHTML = mdToHtml(data.reply);
+    if (data.intent === 'log') refreshSidebar();
+  } catch (err) {
+    typing.classList.remove('typing');
+    typing.innerHTML = mdToHtml('⚠️ Error: ' + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+function onSubmit(e) { e.preventDefault(); send(input.value); }
+function fill(prefix) { showTab('chat'); input.value = prefix; input.focus(); }
+
+async function refreshSidebar() {
+  try {
+    const [stats, all] = await Promise.all([api('/api/stats'), api('/api/entries?range=all')]);
+    document.getElementById('s-total').textContent = stats.total;
+    document.getElementById('s-days').textContent = stats.days;
+    document.getElementById('s-skills').textContent = stats.skills;
+    const box = document.getElementById('entries');
+    const recent = all.slice(-6).reverse();
+    box.innerHTML = recent.length ? '' : '<div class="sub">No entries yet — log your first day of work.</div>';
+    for (const e of recent) {
+      const d = document.createElement('div');
+      d.className = 'entry';
+      d.innerHTML = '<div class="d"><span>' + e.date + '</span>' +
+        '<button class="mini danger" onclick="deleteEntry(\'' + e.id + '\')">✕</button></div>' +
+        escapeHtml(e.text.slice(0, 140));
+      box.appendChild(d);
+    }
+  } catch (_) {}
+}
+
+/* -------------------------------------------------------------- delete */
+async function deleteEntry(id) {
+  if (!confirm('Delete this log entry? This cannot be undone.')) return;
+  try {
+    await api('/api/entries/' + id, { method: 'DELETE' });
+    refreshSidebar(); loadHistory();
+  } catch (err) { alert('Delete failed: ' + err.message); }
+}
+
+/* ------------------------------------------------------------- history */
+async function loadHistory() {
+  const range = document.getElementById('h-range').value;
+  const q = document.getElementById('h-search').value;
+  const list = document.getElementById('h-list');
+  try {
+    const entries = await api('/api/entries?range=' + range + '&q=' + encodeURIComponent(q));
+    histEntries = {};
+    entries.forEach(e => { histEntries[e.id] = e; });
+    if (!entries.length) { list.innerHTML = '<div class="empty">No matching entries.</div>'; return; }
+    const groups = {};
+    for (const e of entries) (groups[e.date] = groups[e.date] || []).push(e);
+    const dates = Object.keys(groups).sort().reverse();
+    list.innerHTML = dates.map(date => {
+      const items = groups[date].map(e => renderEntry(e)).join('');
+      return '<div class="h-group"><div class="h-date">' + date + '</div>' + items + '</div>';
+    }).join('');
+  } catch (err) {
+    list.innerHTML = '<div class="empty">Failed to load: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+function renderEntry(e) {
+  const tags = (e.tags && e.tags.length) ? ' • ' + e.tags.join(', ') : '';
+  return '<div class="h-entry" id="he-' + e.id + '">' +
+    '<div class="h-text">' + escapeHtml(e.text) + '</div>' +
+    '<div class="h-meta"><span class="tags">id ' + e.id + tags + '</span>' +
+    '<span class="acts">' +
+    '<button class="mini" onclick="editEntry(\'' + e.id + '\')">Edit</button>' +
+    '<button class="mini danger" onclick="deleteEntry(\'' + e.id + '\')">Delete</button>' +
+    '</span></div></div>';
+}
+function editEntry(id) {
+  const e = histEntries[id];
+  if (!e) return;
+  const card = document.getElementById('he-' + id);
+  card.innerHTML =
+    '<div class="edit-area">' +
+    '<textarea id="ed-text-' + id + '">' + escapeHtml(e.text) + '</textarea>' +
+    '<div class="row"><label class="sub">Date</label>' +
+    '<input type="text" id="ed-date-' + id + '" value="' + e.date + '" style="width:140px" placeholder="YYYY-MM-DD">' +
+    '<input type="text" id="ed-tags-' + id + '" value="' + (e.tags || []).join(', ') + '" style="flex:1" placeholder="tags, comma separated">' +
+    '</div><div class="row">' +
+    '<button class="primary mini" onclick="saveEntry(\'' + id + '\')">Save</button>' +
+    '<button class="mini" onclick="loadHistory()">Cancel</button>' +
+    '</div></div>';
+}
+async function saveEntry(id) {
+  const text = document.getElementById('ed-text-' + id).value.trim();
+  const date = document.getElementById('ed-date-' + id).value.trim();
+  const tags = document.getElementById('ed-tags-' + id).value.split(',').map(s => s.trim()).filter(Boolean);
+  if (!text) { alert('Entry text cannot be empty.'); return; }
+  try {
+    await api('/api/entries/' + id, jsonBody('PUT', { text, date, tags }));
+    refreshSidebar(); loadHistory();
+  } catch (err) { alert('Save failed: ' + err.message); }
+}
+
+/* -------------------------------------------------------------- skills */
+async function loadSkills() {
+  const box = document.getElementById('skill-list');
+  try {
+    const skills = await api('/api/skills');
+    skillCache = {};
+    skills.forEach(s => { skillCache[s.slug] = s; });
+    if (!skills.length) { box.innerHTML = '<div class="empty">No skills found.</div>'; return; }
+    box.innerHTML = skills.map(s => renderSkill(s)).join('');
+  } catch (err) {
+    box.innerHTML = '<div class="empty">Failed to load skills.</div>';
+  }
+}
+function renderSkill(s) {
+  const bi = s.builtin ? '<span class="badge bi">built-in</span>' : '';
+  const desc = s.description ? '<div class="desc">' + escapeHtml(s.description) + '</div>' : '';
+  const chips = (s.triggers && s.triggers.length)
+    ? '<div class="chips">' + s.triggers.map(t => '<span class="chip">' + escapeHtml(t) + '</span>').join('') + '</div>' : '';
+  const scripts = (s.scripts && s.scripts.length)
+    ? '<div class="chips">' + s.scripts.map(f => '<span class="chip">📄 ' + escapeHtml(f) + '</span>').join('') + '</div>' : '';
+  const instr = s.instructions
+    ? '<details><summary>View SKILL.md instructions</summary><pre>' + escapeHtml(s.instructions) + '</pre></details>' : '';
+  const del = s.builtin ? '' : '<button class="mini danger" onclick="deleteSkill(\'' + s.slug + '\')">Delete</button>';
+  return '<div class="skill-card' + (s.builtin ? ' builtin' : '') + '" id="sc-' + s.slug + '">' +
+    '<div class="top"><div class="name">' + escapeHtml(s.name) + ' ' + bi + '</div>' +
+    '<span class="badge slug">' + escapeHtml(s.slug) + '</span></div>' +
+    desc + chips + scripts + instr +
+    '<div class="acts">' +
+    '<button class="primary mini" onclick="runSkill(\'' + s.slug + '\', ' + JSON.stringify(defaultMsg(s)) + ')">Run</button>' +
+    '<button class="mini" onclick="editSkill(\'' + s.slug + '\')">Edit</button>' + del +
+    '</div></div>';
+}
+function defaultMsg(s) {
+  if (s.slug === 'log-today') return 'I want to log my work.';
+  if (s.slug === 'summarize-placement') return 'Give me a summary of my work.';
+  return 'Run the ' + s.name + ' skill.';
+}
+async function addSkill(ev) {
+  ev.preventDefault();
+  const payload = {
+    name: document.getElementById('sk-name').value.trim(),
+    description: document.getElementById('sk-desc').value.trim(),
+    triggers: document.getElementById('sk-triggers').value.split(',').map(s => s.trim()).filter(Boolean),
+    instructions: document.getElementById('sk-instructions').value.trim(),
+    script_name: document.getElementById('sk-script-name').value.trim() || null,
+    script_content: document.getElementById('sk-script-body').value || null,
+  };
+  if (!payload.name) return;
+  try {
+    await api('/api/skills', jsonBody('POST', payload));
+    ev.target.reset();
+    loadSkills(); refreshSidebar();
+  } catch (err) { alert('Could not add skill: ' + err.message); }
+}
+function editSkill(slug) {
+  const s = skillCache[slug];
+  if (!s) return;
+  const card = document.getElementById('sc-' + slug);
+  card.innerHTML =
+    '<div class="edit-area">' +
+    '<label class="sub">Name</label><input type="text" id="se-name-' + slug + '" value="' + escapeHtml(s.name) + '">' +
+    '<label class="sub">Description</label><input type="text" id="se-desc-' + slug + '" value="' + escapeHtml(s.description || '') + '">' +
+    '<label class="sub">Triggers (comma separated)</label><input type="text" id="se-trig-' + slug + '" value="' + escapeHtml((s.triggers || []).join(', ')) + '">' +
+    '<label class="sub">Instructions (markdown)</label><textarea id="se-instr-' + slug + '">' + escapeHtml(s.instructions || '') + '</textarea>' +
+    '<div class="row"><button class="primary mini" onclick="saveSkill(\'' + slug + '\')">Save</button>' +
+    '<button class="mini" onclick="loadSkills()">Cancel</button></div></div>';
+}
+async function saveSkill(slug) {
+  const payload = {
+    name: document.getElementById('se-name-' + slug).value.trim(),
+    description: document.getElementById('se-desc-' + slug).value.trim(),
+    triggers: document.getElementById('se-trig-' + slug).value.split(',').map(s => s.trim()).filter(Boolean),
+    instructions: document.getElementById('se-instr-' + slug).value.trim(),
+  };
+  if (!payload.name) { alert('Skill name cannot be empty.'); return; }
+  try {
+    await api('/api/skills/' + slug, jsonBody('PUT', payload));
+    loadSkills();
+  } catch (err) { alert('Save failed: ' + err.message); }
+}
+async function deleteSkill(slug) {
+  if (!confirm('Delete this skill package?')) return;
+  try {
+    await api('/api/skills/' + slug, { method: 'DELETE' });
+    loadSkills(); refreshSidebar();
+  } catch (err) { alert('Delete failed: ' + err.message); }
+}
+
+/* ---------------------------------------------------------------- tabs */
+function showTab(tab) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
+  if (tab === 'history') loadHistory();
+  if (tab === 'skills') loadSkills();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+/* -------------------------------------------------------------- health */
+async function checkHealth() {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('status-text');
+  try {
+    const h = await api('/api/health');
+    if (h.ok) { dot.className = 'dot on'; txt.textContent = h.model + ' ready'; }
+    else { dot.className = 'dot off'; txt.textContent = 'LLM offline'; }
+  } catch (_) { dot.className = 'dot off'; txt.textContent = 'server offline'; }
+}
+
+addMessage("Hi! I'm your work-log assistant. Tell me what you worked on today and I'll save it. "
+  + "Then ask me for a **daily**, **weekly**, **monthly**, or **full-placement** impact summary. "
+  + "Open the **Skills** tab to run built-in skills or add your own capability packages.", 'bot');
+refreshSidebar();
+checkHealth();
+setInterval(checkHealth, 15000);
+input.focus();
+</script>
+</body>
+</html>
