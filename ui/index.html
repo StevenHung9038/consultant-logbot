@@ -8,7 +8,7 @@
   :root {
     --bg: #0f172a; --panel: #1e293b; --panel2: #273449; --line: #334155;
     --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent2: #22c55e;
-    --user: #1d4ed8; --bot: #243247; --danger: #ef4444; --warn: #f59e0b;
+    --user: #1d4ed8; --bot: #243247; --danger: #ef4444; --warn: #f59e0b; --violet: #a78bfa;
   }
   * { box-sizing: border-box; }
   body { margin: 0; height: 100vh; display: flex; flex-direction: column;
@@ -34,8 +34,8 @@
 
   aside { width: 300px; min-width: 300px; background: var(--panel); border-right: 1px solid var(--line);
     display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow-y: auto; }
-  .stats { display: flex; gap: 8px; }
-  .stat { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
   .stat b { display: block; font-size: 18px; color: var(--accent); }
   .stat small { color: var(--muted); font-size: 10.5px; }
   h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 0; }
@@ -56,8 +56,10 @@
   .sub { color: var(--muted); font-size: 12px; }
 
   main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .chat-head { padding: 14px 22px; border-bottom: 1px solid var(--line); }
+  .chat-head { padding: 12px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; }
   .chat-head h1 { font-size: 15px; margin: 0; }
+  .agent-pick { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .agent-pick select { padding: 6px 10px; }
   #chat { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
   .msg { max-width: 78%; padding: 12px 15px; border-radius: 14px; line-height: 1.5; font-size: 14px; word-wrap: break-word; }
   .msg.user { align-self: flex-end; background: var(--user); border-bottom-right-radius: 4px; }
@@ -69,7 +71,10 @@
   .msg.bot blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--accent);
     background: rgba(56,189,248,.08); border-radius: 4px; color: var(--muted); }
   .msg.bot code { background: #0b1220; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
-  .skill-note { align-self: flex-start; font-size: 11.5px; color: var(--accent2); padding: 2px 4px; }
+  .chat-meta { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 2px 4px; }
+  .mchip { font-size: 10.5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); }
+  .mchip.agent { color: var(--violet); border-color: rgba(167,139,250,.4); background: rgba(167,139,250,.1); }
+  .mchip.skill { color: var(--accent2); border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.1); }
   .typing { color: var(--muted); font-style: italic; }
   form.chat-form { display: flex; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--line); }
   input[type=text], textarea, select { background: var(--panel2); border: 1px solid var(--line); color: var(--text);
@@ -81,10 +86,11 @@
 
   .page { flex: 1; overflow-y: auto; padding: 22px; max-width: 940px; margin: 0 auto; width: 100%; }
   .page h2 { font-size: 16px; margin: 0 0 4px; }
-  .page .lead { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
-  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .page .lead { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.55; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
   .toolbar input { flex: 1; min-width: 200px; }
   .toolbar select { min-width: 150px; }
+  .import-row { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
 
   .h-group { margin-bottom: 20px; }
   .h-date { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent);
@@ -98,29 +104,33 @@
   .edit-area textarea { width: 100%; min-height: 70px; resize: vertical; }
   .edit-area .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-  .skill-form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+  .card-form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
     margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .skill-form .full { grid-column: 1 / -1; }
-  .skill-form label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase;
+  .card-form .full { grid-column: 1 / -1; }
+  .card-form label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase;
     letter-spacing: .05em; margin-bottom: 4px; }
-  .skill-form input, .skill-form select, .skill-form textarea { width: 100%; }
-  .skill-form textarea { min-height: 110px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
-  .skill-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-  .skill-card.builtin { border-left: 3px solid var(--accent2); }
-  .skill-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-  .skill-card .name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .card-form input, .card-form select, .card-form textarea { width: 100%; }
+  .card-form textarea { min-height: 100px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .item-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .item-card.builtin { border-left: 3px solid var(--accent2); }
+  .item-card.agent { border-left: 3px solid var(--violet); }
+  .item-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .item-card .name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .badge { font-size: 10.5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
-  .badge.lvl { background: rgba(56,189,248,.12); color: var(--accent); border-color: rgba(56,189,248,.3); }
   .badge.bi { background: rgba(34,197,94,.12); color: var(--accent2); border-color: rgba(34,197,94,.3); }
+  .badge.model { background: rgba(56,189,248,.12); color: var(--accent); border-color: rgba(56,189,248,.3); }
   .badge.slug { font-family: ui-monospace, Menlo, monospace; color: var(--muted); }
-  .skill-card .desc { color: var(--text); font-size: 12.8px; margin-top: 8px; line-height: 1.45; }
-  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .item-card .desc { color: var(--text); font-size: 12.8px; margin-top: 8px; line-height: 1.45; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; align-items: center; }
+  .chips .lbl { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-right: 2px; }
   .chip { font-size: 10.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
-  .skill-card details { margin-top: 10px; }
-  .skill-card summary { cursor: pointer; font-size: 12px; color: var(--accent); }
-  .skill-card pre { background: #0b1220; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  .chip.entry { color: var(--violet); border-color: rgba(167,139,250,.35); }
+  .chip.skill { color: var(--accent2); border-color: rgba(34,197,94,.35); }
+  .item-card details { margin-top: 10px; }
+  .item-card summary { cursor: pointer; font-size: 12px; color: var(--accent); }
+  .item-card pre { background: #0b1220; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
     font-size: 12px; white-space: pre-wrap; margin: 8px 0 0; }
-  .skill-card .acts { display: flex; gap: 6px; margin-top: 12px; }
+  .item-card .acts { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
   .empty { color: var(--muted); font-size: 13px; padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
 </style>
 </head>
@@ -131,6 +141,7 @@
       <button data-tab="chat" class="active">Chat</button>
       <button data-tab="history">History</button>
       <button data-tab="skills">Skills</button>
+      <button data-tab="agents">Agents</button>
     </div>
     <div class="status"><span class="dot" id="dot"></span><span id="status-text">checking LLM…</span></div>
   </nav>
@@ -143,6 +154,7 @@
           <div class="stat"><b id="s-total">0</b><small>Entries</small></div>
           <div class="stat"><b id="s-days">0</b><small>Days</small></div>
           <div class="stat"><b id="s-skills">0</b><small>Skills</small></div>
+          <div class="stat"><b id="s-agents">0</b><small>Agents</small></div>
         </div>
         <h3>Log work</h3>
         <div class="actions">
@@ -160,7 +172,13 @@
         <div class="logentries" id="entries"><div class="sub">Loading…</div></div>
       </aside>
       <main>
-        <div class="chat-head"><h1>Placement log assistant</h1></div>
+        <div class="chat-head">
+          <h1>Placement log assistant</h1>
+          <div class="agent-pick">
+            <span>Agent</span>
+            <select id="agent-select" onchange="activeAgent = this.value"></select>
+          </div>
+        </div>
         <div id="chat"></div>
         <form class="chat-form" onsubmit="onSubmit(event)">
           <input type="text" id="input" placeholder="Describe your work, or ask for a summary…" autocomplete="off" />
@@ -192,13 +210,18 @@
       <div class="page">
         <h2>Skills</h2>
         <div class="lead">
-          Skills are portable, open-format capability packages. Each one is a <code>SKILL.md</code>
-          file (frontmatter + instructions) with an optional <code>scripts/</code> folder, stored under
-          <code>data/skills/&lt;slug&gt;/</code>. Built-in skills drive the core workflows; add your own
-          domain expertise below and run it from chat.
+          Skills are portable, open-format capability packages. Each is a <code>SKILL.md</code> file
+          (frontmatter + instructions) with an optional <code>scripts/</code> folder under
+          <code>data/skills/&lt;slug&gt;/</code>. Run them from chat, or import an existing package.
         </div>
 
-        <form class="skill-form" onsubmit="addSkill(event)">
+        <div class="import-row">
+          <button class="primary" onclick="document.getElementById('sk-import').click()">Import skill (.md / .zip)</button>
+          <input type="file" id="sk-import" accept=".md,.markdown,.zip" style="display:none" onchange="doImportSkill(this)" />
+          <span class="sub">or create one below</span>
+        </div>
+
+        <form class="card-form" onsubmit="addSkill(event)">
           <div><label>Skill name</label><input type="text" id="sk-name" required placeholder="e.g. Weekly Client Report" /></div>
           <div><label>Triggers (comma separated)</label><input type="text" id="sk-triggers" placeholder="weekly report, client update" /></div>
           <div class="full"><label>Description</label><input type="text" id="sk-desc" placeholder="One line: what this skill does and when to use it." /></div>
@@ -209,8 +232,39 @@
           <div><label>Script content (optional)</label><input type="text" id="sk-script-body" placeholder="#!/usr/bin/env python3 ..." /></div>
           <div class="full"><button class="primary" type="submit">Add skill</button></div>
         </form>
-
         <div id="skill-list"></div>
+      </div>
+    </section>
+
+    <!-- AGENTS -->
+    <section id="view-agents" class="view">
+      <div class="page">
+        <h2>Agents</h2>
+        <div class="lead">
+          An agent is an entry point with a persona and a set of skills. Each is a portable
+          <code>AGENT.md</code> file under <code>data/agents/&lt;slug&gt;/</code>. Set <b>entry points</b>
+          (keywords) so chat messages route to the right agent, choose its skills and model, and write
+          its persona. Import an existing agent package below.
+        </div>
+
+        <div class="import-row">
+          <button class="primary" onclick="document.getElementById('ag-import').click()">Import agent (.md / .zip)</button>
+          <input type="file" id="ag-import" accept=".md,.markdown,.zip" style="display:none" onchange="doImportAgent(this)" />
+          <span class="sub">or create one below</span>
+        </div>
+
+        <form class="card-form" onsubmit="addAgent(event)">
+          <div><label>Agent name</label><input type="text" id="ag-name" required placeholder="e.g. Client Reporter" /></div>
+          <div><label>Model</label><input type="text" id="ag-model" placeholder="llama3.2:3b" /></div>
+          <div class="full"><label>Description</label><input type="text" id="ag-desc" placeholder="One line: what this agent is for." /></div>
+          <div><label>Entry points (comma separated)</label><input type="text" id="ag-entries" placeholder="client report, status update" /></div>
+          <div><label>Skills (comma separated slugs)</label><input type="text" id="ag-skills" placeholder="summarize-placement, log-today" /></div>
+          <div class="full"><label>Persona / system prompt (markdown)</label>
+            <textarea id="ag-body" placeholder="You are a professional reporting assistant..."></textarea>
+          </div>
+          <div class="full"><button class="primary" type="submit">Add agent</button></div>
+        </form>
+        <div id="agent-list"></div>
       </div>
     </section>
   </div>
@@ -221,6 +275,8 @@ const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 let histEntries = {};
 let skillCache = {};
+let agentCache = {};
+let activeAgent = '';
 
 /* ------------------------------------------------------------ utilities */
 function escapeHtml(s) {
@@ -253,6 +309,12 @@ async function api(url, opts) {
 function jsonBody(method, data) {
   return { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
 }
+async function importFile(url, file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  return api(url, { method: 'POST', body: fd });
+}
+function csv(el) { return el.value.split(',').map(s => s.trim()).filter(Boolean); }
 
 /* ----------------------------------------------------------- chat view */
 function addMessage(text, who) {
@@ -263,31 +325,34 @@ function addMessage(text, who) {
   chat.scrollTop = chat.scrollHeight;
   return div;
 }
-function addSkillNote(name) {
+function addMeta(data) {
+  if (!data || (!data.agent_name && !(data.skills_used && data.skills_used.length))) return;
   const div = document.createElement('div');
-  div.className = 'skill-note';
-  div.textContent = '▶ ran skill: ' + name;
+  div.className = 'chat-meta';
+  let html = '';
+  if (data.agent_name) html += '<span class="mchip agent">🤖 ' + escapeHtml(data.agent_name) + '</span>';
+  (data.skills_used || []).forEach(s => { html += '<span class="mchip skill">⚙ ' + escapeHtml(s) + '</span>'; });
+  div.innerHTML = html;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 async function send(text) { await postChat(text, null); }
-async function runSkill(slug, message) {
-  showTab('chat');
-  await postChat(message, slug);
-}
+async function runSkill(slug, message) { showTab('chat'); await postChat(message, slug); }
 async function postChat(text, skill) {
   text = (text || '').trim();
   if (!text) return;
-  if (skill) addSkillNote(skill);
   addMessage(text, 'user');
   input.value = '';
   sendBtn.disabled = true;
   const typing = addMessage('Thinking…', 'bot');
   typing.classList.add('typing');
   try {
-    const data = await api('/api/chat', jsonBody('POST', { message: text, skill }));
+    const payload = { message: text, skill };
+    if (activeAgent) payload.agent = activeAgent;
+    const data = await api('/api/chat', jsonBody('POST', payload));
     typing.classList.remove('typing');
     typing.innerHTML = mdToHtml(data.reply);
+    addMeta(data);
     if (data.intent === 'log') refreshSidebar();
   } catch (err) {
     typing.classList.remove('typing');
@@ -306,6 +371,7 @@ async function refreshSidebar() {
     document.getElementById('s-total').textContent = stats.total;
     document.getElementById('s-days').textContent = stats.days;
     document.getElementById('s-skills').textContent = stats.skills;
+    document.getElementById('s-agents').textContent = stats.agents;
     const box = document.getElementById('entries');
     const recent = all.slice(-6).reverse();
     box.innerHTML = recent.length ? '' : '<div class="sub">No entries yet — log your first day of work.</div>';
@@ -323,10 +389,8 @@ async function refreshSidebar() {
 /* -------------------------------------------------------------- delete */
 async function deleteEntry(id) {
   if (!confirm('Delete this log entry? This cannot be undone.')) return;
-  try {
-    await api('/api/entries/' + id, { method: 'DELETE' });
-    refreshSidebar(); loadHistory();
-  } catch (err) { alert('Delete failed: ' + err.message); }
+  try { await api('/api/entries/' + id, { method: 'DELETE' }); refreshSidebar(); loadHistory(); }
+  catch (err) { alert('Delete failed: ' + err.message); }
 }
 
 /* ------------------------------------------------------------- history */
@@ -380,10 +444,8 @@ async function saveEntry(id) {
   const date = document.getElementById('ed-date-' + id).value.trim();
   const tags = document.getElementById('ed-tags-' + id).value.split(',').map(s => s.trim()).filter(Boolean);
   if (!text) { alert('Entry text cannot be empty.'); return; }
-  try {
-    await api('/api/entries/' + id, jsonBody('PUT', { text, date, tags }));
-    refreshSidebar(); loadHistory();
-  } catch (err) { alert('Save failed: ' + err.message); }
+  try { await api('/api/entries/' + id, jsonBody('PUT', { text, date, tags })); refreshSidebar(); loadHistory(); }
+  catch (err) { alert('Save failed: ' + err.message); }
 }
 
 /* -------------------------------------------------------------- skills */
@@ -393,29 +455,27 @@ async function loadSkills() {
     const skills = await api('/api/skills');
     skillCache = {};
     skills.forEach(s => { skillCache[s.slug] = s; });
-    if (!skills.length) { box.innerHTML = '<div class="empty">No skills found.</div>'; return; }
-    box.innerHTML = skills.map(s => renderSkill(s)).join('');
-  } catch (err) {
-    box.innerHTML = '<div class="empty">Failed to load skills.</div>';
-  }
+    box.innerHTML = skills.length ? skills.map(renderSkill).join('') : '<div class="empty">No skills found.</div>';
+  } catch (err) { box.innerHTML = '<div class="empty">Failed to load skills.</div>'; }
 }
 function renderSkill(s) {
   const bi = s.builtin ? '<span class="badge bi">built-in</span>' : '';
   const desc = s.description ? '<div class="desc">' + escapeHtml(s.description) + '</div>' : '';
-  const chips = (s.triggers && s.triggers.length)
-    ? '<div class="chips">' + s.triggers.map(t => '<span class="chip">' + escapeHtml(t) + '</span>').join('') + '</div>' : '';
-  const scripts = (s.scripts && s.scripts.length)
-    ? '<div class="chips">' + s.scripts.map(f => '<span class="chip">📄 ' + escapeHtml(f) + '</span>').join('') + '</div>' : '';
+  const trig = (s.triggers && s.triggers.length)
+    ? '<div class="chips"><span class="lbl">triggers</span>' + s.triggers.map(t => '<span class="chip">' + escapeHtml(t) + '</span>').join('') + '</div>' : '';
+  const scr = (s.scripts && s.scripts.length)
+    ? '<div class="chips"><span class="lbl">scripts</span>' + s.scripts.map(f => '<span class="chip">📄 ' + escapeHtml(f) + '</span>').join('') + '</div>' : '';
   const instr = s.instructions
     ? '<details><summary>View SKILL.md instructions</summary><pre>' + escapeHtml(s.instructions) + '</pre></details>' : '';
   const del = s.builtin ? '' : '<button class="mini danger" onclick="deleteSkill(\'' + s.slug + '\')">Delete</button>';
-  return '<div class="skill-card' + (s.builtin ? ' builtin' : '') + '" id="sc-' + s.slug + '">' +
+  return '<div class="item-card' + (s.builtin ? ' builtin' : '') + '" id="sc-' + s.slug + '">' +
     '<div class="top"><div class="name">' + escapeHtml(s.name) + ' ' + bi + '</div>' +
     '<span class="badge slug">' + escapeHtml(s.slug) + '</span></div>' +
-    desc + chips + scripts + instr +
+    desc + trig + scr + instr +
     '<div class="acts">' +
     '<button class="primary mini" onclick="runSkill(\'' + s.slug + '\', ' + JSON.stringify(defaultMsg(s)) + ')">Run</button>' +
-    '<button class="mini" onclick="editSkill(\'' + s.slug + '\')">Edit</button>' + del +
+    '<button class="mini" onclick="editSkill(\'' + s.slug + '\')">Edit</button>' +
+    '<button class="mini" onclick="importScript(\'' + s.slug + '\')">＋ script</button>' + del +
     '</div></div>';
 }
 function defaultMsg(s) {
@@ -428,23 +488,19 @@ async function addSkill(ev) {
   const payload = {
     name: document.getElementById('sk-name').value.trim(),
     description: document.getElementById('sk-desc').value.trim(),
-    triggers: document.getElementById('sk-triggers').value.split(',').map(s => s.trim()).filter(Boolean),
+    triggers: csv(document.getElementById('sk-triggers')),
     instructions: document.getElementById('sk-instructions').value.trim(),
     script_name: document.getElementById('sk-script-name').value.trim() || null,
     script_content: document.getElementById('sk-script-body').value || null,
   };
   if (!payload.name) return;
-  try {
-    await api('/api/skills', jsonBody('POST', payload));
-    ev.target.reset();
-    loadSkills(); refreshSidebar();
-  } catch (err) { alert('Could not add skill: ' + err.message); }
+  try { await api('/api/skills', jsonBody('POST', payload)); ev.target.reset(); loadSkills(); refreshSidebar(); }
+  catch (err) { alert('Could not add skill: ' + err.message); }
 }
 function editSkill(slug) {
   const s = skillCache[slug];
   if (!s) return;
-  const card = document.getElementById('sc-' + slug);
-  card.innerHTML =
+  document.getElementById('sc-' + slug).innerHTML =
     '<div class="edit-area">' +
     '<label class="sub">Name</label><input type="text" id="se-name-' + slug + '" value="' + escapeHtml(s.name) + '">' +
     '<label class="sub">Description</label><input type="text" id="se-desc-' + slug + '" value="' + escapeHtml(s.description || '') + '">' +
@@ -457,21 +513,127 @@ async function saveSkill(slug) {
   const payload = {
     name: document.getElementById('se-name-' + slug).value.trim(),
     description: document.getElementById('se-desc-' + slug).value.trim(),
-    triggers: document.getElementById('se-trig-' + slug).value.split(',').map(s => s.trim()).filter(Boolean),
+    triggers: csv(document.getElementById('se-trig-' + slug)),
     instructions: document.getElementById('se-instr-' + slug).value.trim(),
   };
   if (!payload.name) { alert('Skill name cannot be empty.'); return; }
-  try {
-    await api('/api/skills/' + slug, jsonBody('PUT', payload));
-    loadSkills();
-  } catch (err) { alert('Save failed: ' + err.message); }
+  try { await api('/api/skills/' + slug, jsonBody('PUT', payload)); loadSkills(); }
+  catch (err) { alert('Save failed: ' + err.message); }
 }
 async function deleteSkill(slug) {
   if (!confirm('Delete this skill package?')) return;
+  try { await api('/api/skills/' + slug, { method: 'DELETE' }); loadSkills(); refreshSidebar(); }
+  catch (err) { alert('Delete failed: ' + err.message); }
+}
+async function doImportSkill(inputEl) {
+  const file = inputEl.files[0];
+  inputEl.value = '';
+  if (!file) return;
+  try { const s = await importFile('/api/skills/import', file); alert('Imported skill: ' + s.name); loadSkills(); refreshSidebar(); }
+  catch (err) { alert('Import failed: ' + err.message); }
+}
+function importScript(slug) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.onchange = async () => {
+    if (!inp.files[0]) return;
+    try { await importFile('/api/skills/' + slug + '/scripts', inp.files[0]); loadSkills(); }
+    catch (err) { alert('Script upload failed: ' + err.message); }
+  };
+  inp.click();
+}
+
+/* -------------------------------------------------------------- agents */
+async function loadAgents() {
+  const box = document.getElementById('agent-list');
   try {
-    await api('/api/skills/' + slug, { method: 'DELETE' });
-    loadSkills(); refreshSidebar();
-  } catch (err) { alert('Delete failed: ' + err.message); }
+    const agents = await api('/api/agents');
+    agentCache = {};
+    agents.forEach(a => { agentCache[a.slug] = a; });
+    box.innerHTML = agents.length ? agents.map(renderAgent).join('') : '<div class="empty">No agents found.</div>';
+    const sel = document.getElementById('agent-select');
+    sel.innerHTML = '<option value="">Auto (route by entry points)</option>' +
+      agents.map(a => '<option value="' + a.slug + '"' + (a.slug === activeAgent ? ' selected' : '') + '>' + escapeHtml(a.name) + '</option>').join('');
+  } catch (err) { box.innerHTML = '<div class="empty">Failed to load agents.</div>'; }
+}
+function renderAgent(a) {
+  const bi = a.builtin ? '<span class="badge bi">built-in</span>' : '';
+  const model = a.model ? '<span class="badge model">' + escapeHtml(a.model) + '</span>' : '';
+  const desc = a.description ? '<div class="desc">' + escapeHtml(a.description) + '</div>' : '';
+  const entries = (a.entry_points && a.entry_points.length)
+    ? '<div class="chips"><span class="lbl">entry points</span>' + a.entry_points.map(e => '<span class="chip entry">' + escapeHtml(e) + '</span>').join('') + '</div>' : '';
+  const sk = (a.skills && a.skills.length)
+    ? '<div class="chips"><span class="lbl">skills</span>' + a.skills.map(s => '<span class="chip skill">' + escapeHtml(s) + '</span>').join('') + '</div>' : '';
+  const body = a.body ? '<details><summary>View AGENT.md persona</summary><pre>' + escapeHtml(a.body) + '</pre></details>' : '';
+  const del = a.builtin ? '' : '<button class="mini danger" onclick="deleteAgent(\'' + a.slug + '\')">Delete</button>';
+  return '<div class="item-card agent" id="ac-' + a.slug + '">' +
+    '<div class="top"><div class="name">' + escapeHtml(a.name) + ' ' + bi + model + '</div>' +
+    '<span class="badge slug">' + escapeHtml(a.slug) + '</span></div>' +
+    desc + entries + sk + body +
+    '<div class="acts">' +
+    '<button class="primary mini" onclick="runAgent(\'' + a.slug + '\')">Use in chat</button>' +
+    '<button class="mini" onclick="editAgent(\'' + a.slug + '\')">Edit</button>' + del +
+    '</div></div>';
+}
+function runAgent(slug) {
+  activeAgent = slug;
+  const sel = document.getElementById('agent-select');
+  if (sel) sel.value = slug;
+  showTab('chat');
+  send('Hello');
+}
+async function addAgent(ev) {
+  ev.preventDefault();
+  const payload = {
+    name: document.getElementById('ag-name').value.trim(),
+    description: document.getElementById('ag-desc').value.trim(),
+    model: document.getElementById('ag-model').value.trim(),
+    entry_points: csv(document.getElementById('ag-entries')),
+    skills: csv(document.getElementById('ag-skills')),
+    body: document.getElementById('ag-body').value.trim(),
+  };
+  if (!payload.name) return;
+  try { await api('/api/agents', jsonBody('POST', payload)); ev.target.reset(); loadAgents(); refreshSidebar(); }
+  catch (err) { alert('Could not add agent: ' + err.message); }
+}
+function editAgent(slug) {
+  const a = agentCache[slug];
+  if (!a) return;
+  document.getElementById('ac-' + slug).innerHTML =
+    '<div class="edit-area">' +
+    '<label class="sub">Name</label><input type="text" id="ae-name-' + slug + '" value="' + escapeHtml(a.name) + '">' +
+    '<label class="sub">Description</label><input type="text" id="ae-desc-' + slug + '" value="' + escapeHtml(a.description || '') + '">' +
+    '<label class="sub">Model</label><input type="text" id="ae-model-' + slug + '" value="' + escapeHtml(a.model || '') + '">' +
+    '<label class="sub">Entry points (comma separated)</label><input type="text" id="ae-entries-' + slug + '" value="' + escapeHtml((a.entry_points || []).join(', ')) + '">' +
+    '<label class="sub">Skills (comma separated)</label><input type="text" id="ae-skills-' + slug + '" value="' + escapeHtml((a.skills || []).join(', ')) + '">' +
+    '<label class="sub">Persona / system prompt</label><textarea id="ae-body-' + slug + '">' + escapeHtml(a.body || '') + '</textarea>' +
+    '<div class="row"><button class="primary mini" onclick="saveAgent(\'' + slug + '\')">Save</button>' +
+    '<button class="mini" onclick="loadAgents()">Cancel</button></div></div>';
+}
+async function saveAgent(slug) {
+  const payload = {
+    name: document.getElementById('ae-name-' + slug).value.trim(),
+    description: document.getElementById('ae-desc-' + slug).value.trim(),
+    model: document.getElementById('ae-model-' + slug).value.trim(),
+    entry_points: csv(document.getElementById('ae-entries-' + slug)),
+    skills: csv(document.getElementById('ae-skills-' + slug)),
+    body: document.getElementById('ae-body-' + slug).value.trim(),
+  };
+  if (!payload.name) { alert('Agent name cannot be empty.'); return; }
+  try { await api('/api/agents/' + slug, jsonBody('PUT', payload)); loadAgents(); }
+  catch (err) { alert('Save failed: ' + err.message); }
+}
+async function deleteAgent(slug) {
+  if (!confirm('Delete this agent?')) return;
+  try { await api('/api/agents/' + slug, { method: 'DELETE' }); loadAgents(); refreshSidebar(); }
+  catch (err) { alert('Delete failed: ' + err.message); }
+}
+async function doImportAgent(inputEl) {
+  const file = inputEl.files[0];
+  inputEl.value = '';
+  if (!file) return;
+  try { const a = await importFile('/api/agents/import', file); alert('Imported agent: ' + a.name); loadAgents(); refreshSidebar(); }
+  catch (err) { alert('Import failed: ' + err.message); }
 }
 
 /* ---------------------------------------------------------------- tabs */
@@ -480,6 +642,7 @@ function showTab(tab) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
   if (tab === 'history') loadHistory();
   if (tab === 'skills') loadSkills();
+  if (tab === 'agents') loadAgents();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -495,9 +658,10 @@ async function checkHealth() {
 }
 
 addMessage("Hi! I'm your work-log assistant. Tell me what you worked on today and I'll save it. "
-  + "Then ask me for a **daily**, **weekly**, **monthly**, or **full-placement** impact summary. "
-  + "Open the **Skills** tab to run built-in skills or add your own capability packages.", 'bot');
+  + "Ask for a **daily / weekly / monthly / full-placement** summary anytime. "
+  + "Use the **Skills** tab for capability packages and the **Agents** tab to switch personas and entry points.", 'bot');
 refreshSidebar();
+loadAgents();
 checkHealth();
 setInterval(checkHealth, 15000);
 input.focus();

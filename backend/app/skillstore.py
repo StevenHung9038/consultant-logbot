@@ -5,9 +5,11 @@ file (YAML-ish frontmatter + markdown instructions) and an optional ``scripts/``
 folder. This mirrors the open agent-skill format used by tools like opencode.
 """
 
+import io
 import re
 import shutil
 import threading
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -192,3 +194,49 @@ def delete_skill(slug: str) -> str:
             return "missing"
         shutil.rmtree(skill_dir)
         return "deleted"
+
+
+def add_script(slug: str, filename: str, content: bytes) -> dict | None:
+    with _lock:
+        if not (SKILLS_DIR / slug / "SKILL.md").is_file():
+            return None
+        scripts_dir = SKILLS_DIR / slug / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        safe = re.sub(r"[^A-Za-z0-9._-]", "_", (filename or "script.sh").strip()) or "script.sh"
+        (scripts_dir / safe).write_bytes(content)
+        return _read_skill(slug)
+
+
+def import_upload(filename: str, content: bytes) -> dict:
+    """Import a SKILL.md (or a .zip containing one plus an optional scripts/ folder)."""
+    if filename.lower().endswith(".zip"):
+        return _import_zip(content)
+    text = content.decode("utf-8", errors="replace")
+    meta, body = _parse(text)
+    name = meta.get("name") or Path(filename).stem
+    triggers = [t.strip() for t in meta.get("triggers", "").split(",") if t.strip()]
+    return create_skill(name, meta.get("description", ""), triggers, body)
+
+
+def _import_zip(content: bytes) -> dict:
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        names = [n for n in zf.namelist() if n.endswith("SKILL.md")]
+        if not names:
+            raise ValueError("No SKILL.md found in archive")
+        names.sort(key=len)
+        md_path = names[0]
+        meta, body = _parse(zf.read(md_path).decode("utf-8", errors="replace"))
+        name = meta.get("name") or Path(md_path).parent.name or "skill"
+        triggers = [t.strip() for t in meta.get("triggers", "").split(",") if t.strip()]
+        skill = create_skill(name, meta.get("description", ""), triggers, body)
+        prefix = str(Path(md_path).parent)
+        if prefix == ".":
+            prefix = ""
+        for n in zf.namelist():
+            if "scripts/" in n and not n.endswith("/"):
+                rel = n.split("scripts/", 1)[1]
+                if rel:
+                    scripts_dir = SKILLS_DIR / skill["slug"] / "scripts"
+                    scripts_dir.mkdir(exist_ok=True)
+                    (scripts_dir / Path(rel).name).write_bytes(zf.read(n))
+        return _read_skill(skill["slug"])

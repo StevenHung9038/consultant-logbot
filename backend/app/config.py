@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 WORKLOG_FILE = DATA_DIR / "worklog.json"
 SKILLS_DIR = DATA_DIR / "skills"
+AGENTS_DIR = DATA_DIR / "agents"
 UI_DIR = BASE_DIR / "ui"
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")

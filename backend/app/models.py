@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     skill: str | None = Field(default=None, max_length=120)
+    agent: str | None = Field(default=None, max_length=120)
 
 
 class LogRequest(BaseModel):
@@ -59,6 +60,36 @@ class SkillRunRequest(BaseModel):
     message: str = Field(default="", max_length=4000)
 
 
+class AgentCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    description: str = Field(default="", max_length=500)
+    model: str = Field(default="", max_length=80)
+    skills: list[str] = Field(default_factory=list)
+    entry_points: list[str] = Field(default_factory=list)
+    body: str = Field(default="", max_length=8000)
+
+
+class AgentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    model: str | None = Field(default=None, max_length=80)
+    skills: list[str] | None = None
+    entry_points: list[str] | None = None
+    body: str | None = Field(default=None, max_length=8000)
+
+
+class Agent(BaseModel):
+    slug: str
+    name: str
+    description: str = ""
+    model: str = ""
+    skills: list[str] = Field(default_factory=list)
+    entry_points: list[str] = Field(default_factory=list)
+    builtin: bool = False
+    body: str = ""
+    path: str = ""
+
+
 class DeleteResponse(BaseModel):
     ok: bool
     deleted: int = 0
@@ -68,6 +99,9 @@ class ChatResponse(BaseModel):
     reply: str
     intent: str
     skill: str | None = None
+    agent: str | None = None
+    agent_name: str | None = None
+    skills_used: list[str] = Field(default_factory=list)
     range: str | None = None
     entries_logged: int = 0
     entry_ids: list[str] = Field(default_factory=list)

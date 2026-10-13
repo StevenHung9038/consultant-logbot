@@ -97,11 +97,13 @@ def _fallback_classify(message: str) -> dict:
     return {"intent": "other", "skill": "", "range": "", "date": "", "text": ""}
 
 
-def classify(message: str, skills: list[dict] | None = None) -> dict:
+def classify(message: str, skills: list[dict] | None = None, persona: str | None = None) -> dict:
     today = date.today().isoformat()
     skills = skills or []
     menu = "\n".join(f"- {s['slug']}: {s.get('description', '')}".rstrip() for s in skills) or "(none)"
     system = CLASSIFY_SYSTEM.replace("{today}", today).replace("{skills}", menu)
+    if persona:
+        system = persona.strip() + "\n\n" + system
     valid_slugs = {s["slug"] for s in skills}
     try:
         raw = chat(system, message, fmt="json", temperature=0.0)
@@ -132,7 +134,7 @@ def classify(message: str, skills: list[dict] | None = None) -> dict:
     return {"intent": intent, "skill": skill, "range": rng, "date": dt, "text": text}
 
 
-def summarize(entries: list[dict], range_label: str, skills: list[dict] | None = None) -> str:
+def summarize(entries: list[dict], range_label: str, persona: str | None = None) -> str:
     if not entries:
         return (f"No work has been logged for the **{range_label}** period yet. "
                 "Tell me what you worked on and I'll save it to your log.")
@@ -143,28 +145,22 @@ def summarize(entries: list[dict], range_label: str, skills: list[dict] | None =
             block += f"  (tags: {', '.join(e['tags'])})"
         blocks.append(block)
 
-    skill_note = ""
-    if skills:
-        names = ", ".join(
-            f"{s['name']} ({s['level']})" if s.get("level") else s["name"] for s in skills
-        )
-        skill_note = (
-            f"\nThe consultant's declared skills are: {names}.\n"
-            "In the 'Skills & Growth' section, connect the logged work to these skills where "
-            "clearly supported by the entries."
-        )
+    system_prompt = SUMMARY_SYSTEM
+    if persona:
+        system_prompt = persona.strip() + "\n\n" + SUMMARY_SYSTEM
 
     user_prompt = (
         f"Period: {range_label}\n"
         f"Number of entries: {len(entries)}\n\n"
-        "Entries:\n" + "\n".join(blocks) + skill_note +
+        "Entries:\n" + "\n".join(blocks) +
         "\n\nWrite the impact-focused summary now."
     )
-    return chat(SUMMARY_SYSTEM, user_prompt, temperature=0.3)
+    return chat(system_prompt, user_prompt, temperature=0.3)
 
 
-def run_skill(skill: dict, user_message: str, worklog_context: str = "") -> str:
-    """Execute a user-defined skill by injecting its instructions into the LLM."""
+def run_skill(skill: dict, user_message: str, worklog_context: str = "",
+              persona: str | None = None) -> str:
+    """Execute a skill by injecting its instructions (and agent persona) into the LLM."""
     system_prompt = (
         f"You are executing the agent skill '{skill['name']}'.\n"
         f"Skill description: {skill.get('description', '')}\n\n"
@@ -174,6 +170,8 @@ def run_skill(skill: dict, user_message: str, worklog_context: str = "") -> str:
         f"{skill.get('instructions', '').strip()}\n"
         "=== END SKILL INSTRUCTIONS ==="
     )
+    if persona:
+        system_prompt = persona.strip() + "\n\n" + system_prompt
     if skill.get("scripts"):
         system_prompt += ("\n\nThis skill ships helper scripts: "
                           + ", ".join(skill["scripts"]) + ".")
